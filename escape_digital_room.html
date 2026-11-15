@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta name="color-scheme" content="dark" />
+<title>Escape the Digital Room</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --bg:#04060c;
+    --line:rgba(148,163,184,.16);
+    --cyan:#22d3ee;
+    --green:#34d399;
+    --amber:#fbbf24;
+    --red:#fb7185;
+    --violet:#a78bfa;
+    --txt:#e6edf7;
+    --muted:#8b9bb4;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+  }
+  html,body{min-height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(900px 620px at 12% -12%,rgba(34,211,238,.17),transparent 62%),
+      radial-gradient(760px 520px at 104% 2%,rgba(52,211,153,.12),transparent 58%),
+      radial-gradient(820px 560px at 50% 118%,rgba(139,92,246,.15),transparent 62%);
+  }
+  .bg-grid{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(148,163,184,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.06) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(circle at 50% 35%,#000 25%,transparent 80%);
+    mask-image:radial-gradient(circle at 50% 35%,#000 25%,transparent 80%);
+  }
+  .scan{
+    position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.5;
+    background:repeating-linear-gradient(to bottom,rgba(255,255,255,.03) 0 1px,transparent 1px 3px);
+  }
+  [hidden]{display:none !important}
+
+  /* ---------- screens ---------- */
+  .screen{position:relative;z-index:2;display:none;min-height:100vh;min-height:100dvh;padding:clamp(14px,3vw,40px)}
+  .screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;animation:screenIn .38s cubic-bezier(.2,.8,.2,1) both}
+  #screen-editor.active{justify-content:flex-start}
+  @keyframes screenIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .card{
+    width:min(940px,100%);
+    background:linear-gradient(180deg,rgba(17,26,43,.88),rgba(9,14,24,.9));
+    border:1px solid var(--line);border-radius:24px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.045);
+    backdrop-filter:blur(14px);
+    padding:clamp(20px,3.6vw,44px);
+  }
+
+  /* ---------- typography ---------- */
+  .eyebrow{
+    margin:0;font-family:var(--mono);font-size:.7rem;letter-spacing:.32em;
+    text-transform:uppercase;color:var(--cyan);opacity:.85;
+  }
+  .muted{color:var(--muted);line-height:1.6}
+  .tiny{font-size:.76rem;color:var(--muted)}
+  code{font-family:var(--mono);background:rgba(148,163,184,.12);padding:2px 7px;border-radius:6px;color:#bae6fd}
+  h1.title{
+    font-family:var(--mono);text-align:center;
+    font-size:clamp(1.35rem,3.6vw,2.45rem);line-height:1.18;letter-spacing:.06em;
+    margin:.25em 0 .15em;
+    background:linear-gradient(180deg,#ffffff,#a5f3fc 55%,#22d3ee);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 0 26px rgba(34,211,238,.32));
+  }
+  .lede{text-align:center;color:var(--muted);margin:0 0 6px;font-size:clamp(.95rem,1.6vw,1.05rem)}
+
+  /* ---------- home ---------- */
+  .home-head{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .badge{
+    width:76px;height:76px;border-radius:50%;display:grid;place-items:center;margin-bottom:6px;
+    background:radial-gradient(circle at 50% 30%,rgba(34,211,238,.24),rgba(34,211,238,.04));
+    border:1px solid rgba(34,211,238,.4);
+    box-shadow:0 0 0 8px rgba(34,211,238,.04),0 0 40px rgba(34,211,238,.28);
+    animation:float 5s ease-in-out infinite;
+  }
+  .badge svg{width:38px;height:38px;stroke:#7dd3fc;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  .rule-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0 14px}
+  .rule{
+    display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:14px;
+    background:rgba(148,163,184,.05);border:1px solid var(--line);
+  }
+  .rule .ri{
+    flex:0 0 30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    font-family:var(--mono);font-size:.8rem;color:#67e8f9;
+    background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.3);
+  }
+  .rule b{display:block;font-size:.9rem;margin-bottom:3px}
+  .rule p{margin:0;font-size:.8rem;color:var(--muted);line-height:1.45}
+
+  .warn{
+    display:flex;gap:10px;align-items:flex-start;margin:14px 0 22px;padding:13px 16px;
+    border-radius:12px;font-size:.83rem;line-height:1.5;
+    color:#fde68a;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.28);
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:var(--mono);font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;
+    padding:13px 24px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(148,163,184,.07);color:var(--txt);cursor:pointer;
+    transition:transform .16s,background .16s,border-color .16s,box-shadow .16s;
+  }
+  .btn:hover:not(:disabled){border-color:rgba(148,163,184,.38);background:rgba(148,163,184,.13)}
+  .btn:active:not(:disabled){transform:translateY(1px)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.primary{
+    background:linear-gradient(180deg,rgba(34,211,238,.28),rgba(34,211,238,.1));
+    border-color:rgba(34,211,238,.55);color:#cffafe;
+    box-shadow:0 0 26px rgba(34,211,238,.22),inset 0 0 20px rgba(34,211,238,.08);
+  }
+  .btn.primary:hover:not(:disabled){background:linear-gradient(180deg,rgba(34,211,238,.4),rgba(34,211,238,.16));box-shadow:0 0 34px rgba(34,211,238,.34)}
+  .btn.ghost{background:transparent;color:var(--muted)}
+  .btn.danger{border-color:rgba(251,113,133,.4);color:#fecdd3;background:rgba(251,113,133,.08)}
+  .btn.lg{padding:16px 40px;font-size:.88rem}
+  .link-btn{
+    background:none;border:none;color:var(--muted);font-family:var(--mono);
+    font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;
+    padding:8px 10px;border-radius:8px;transition:.15s;
+  }
+  .link-btn:hover{color:var(--cyan);background:rgba(34,211,238,.07)}
+  .device-row{
+    text-align:center;margin:14px auto 0;font-size:.8rem;color:var(--muted);
+    line-height:1.7;max-width:640px;word-break:break-word;
+  }
+  .device-row a{color:var(--cyan);text-decoration:none;font-family:var(--mono);font-size:.78rem}
+  .device-row a:hover{text-decoration:underline}
+  .device-row .link-btn{font-size:.72rem;padding:2px 8px;margin-left:2px}
+  .build{font-family:var(--mono);font-size:.58rem;letter-spacing:.12em;color:#334155;margin-left:4px}
+  .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+
+  /* ---------- game hud ---------- */
+  .hud{width:min(940px,100%);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .hud-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .chip{
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
+    padding:7px 13px;border-radius:999px;border:1px solid var(--line);color:var(--muted);
+    background:rgba(148,163,184,.06);transition:.2s;
+  }
+  .chip[data-diff="Easy"]{color:#86efac;border-color:rgba(52,211,153,.42);background:rgba(52,211,153,.09)}
+  .chip[data-diff="Medium"]{color:#fde68a;border-color:rgba(251,191,36,.42);background:rgba(251,191,36,.09)}
+  .chip[data-diff="Hard"]{color:#fda4af;border-color:rgba(251,113,133,.42);background:rgba(251,113,133,.09)}
+  .hud-round{font-family:var(--mono);font-size:.78rem;letter-spacing:.1em;color:var(--muted)}
+  .timer{
+    display:flex;align-items:center;gap:7px;
+    font-family:var(--mono);font-size:.86rem;letter-spacing:.06em;color:#a5f3fc;
+    padding:6px 12px;border-radius:10px;border:1px solid rgba(34,211,238,.3);
+    background:rgba(34,211,238,.07);font-variant-numeric:tabular-nums;
+  }
+  .timer::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:pulse 1.4s infinite}
+  .guard{
+    display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.63rem;
+    letter-spacing:.2em;color:#6ee7b7;opacity:.8;
+  }
+  .guard .dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 10px #34d399;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .code-dots{display:flex;gap:7px}
+  .code-slot{
+    width:36px;height:42px;display:grid;place-items:center;border-radius:10px;
+    border:1px dashed rgba(148,163,184,.28);color:#334155;
+    font-family:var(--mono);font-size:1rem;transition:.25s;
+  }
+  .code-slot.filled{
+    border:1px solid rgba(52,211,153,.55);color:#6ee7b7;background:rgba(52,211,153,.1);
+    box-shadow:0 0 20px rgba(52,211,153,.18);
+  }
+
+  .progress{width:min(940px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .prog{
+    display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:11px;
+    border:1px solid var(--line);background:rgba(148,163,184,.035);
+    font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#5b6b83;
+    transition:.25s;
+  }
+  .prog-num{
+    width:22px;height:22px;flex:0 0 22px;display:grid;place-items:center;border-radius:7px;
+    background:rgba(148,163,184,.1);font-size:.68rem;
+  }
+  .prog.current{border-color:rgba(34,211,238,.4);color:#a5f3fc;background:rgba(34,211,238,.07)}
+  .prog.current .prog-num{background:rgba(34,211,238,.22);color:#cffafe}
+  .prog.done{border-color:rgba(52,211,153,.4);color:#6ee7b7;background:rgba(52,211,153,.07)}
+  .prog.done .prog-num{background:rgba(52,211,153,.22);color:#d1fae5}
+
+  /* ---------- question card ---------- */
+  .qcard{
+    width:min(940px,100%);
+    background:linear-gradient(180deg,rgba(17,26,43,.9),rgba(9,14,24,.92));
+    border:1px solid var(--line);border-radius:22px;
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.04);
+    padding:clamp(20px,3.4vw,38px);
+  }
+  .qmeta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .qmeta b{color:var(--cyan);font-weight:500}
+  .qbar{height:4px;border-radius:3px;background:rgba(148,163,184,.12);overflow:hidden;margin-bottom:16px}
+  .qbar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#22d3ee,#34d399);transition:width .3s ease}
+  #qtext{margin:16px 0 24px;font-size:clamp(1.1rem,2.5vw,1.65rem);line-height:1.45;font-weight:600;letter-spacing:-.01em}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .opt{
+    display:flex;align-items:center;gap:14px;text-align:left;padding:15px 17px;
+    border-radius:14px;border:1px solid var(--line);background:rgba(148,163,184,.05);
+    color:var(--txt);font-family:inherit;font-size:.97rem;cursor:pointer;
+    transition:transform .15s,border-color .15s,background .15s,box-shadow .15s;
+  }
+  .opt:hover:not(:disabled){border-color:rgba(34,211,238,.5);background:rgba(34,211,238,.08);transform:translateY(-1px)}
+  .opt.selected{
+    border-color:var(--cyan);background:rgba(34,211,238,.13);
+    box-shadow:0 0 0 1px rgba(34,211,238,.45),0 0 28px rgba(34,211,238,.15);
+  }
+  .opt-key{
+    width:29px;height:29px;flex:0 0 29px;display:grid;place-items:center;border-radius:8px;
+    background:rgba(148,163,184,.13);font-family:var(--mono);font-size:.76rem;color:var(--muted);
+    transition:.15s;
+  }
+  .opt.selected .opt-key{background:var(--cyan);color:#03151d;font-weight:700}
+  .opt.correct{border-color:rgba(52,211,153,.7);background:rgba(52,211,153,.15);box-shadow:0 0 26px rgba(52,211,153,.2)}
+  .opt.correct .opt-key{background:var(--green);color:#03251a;font-weight:700}
+  .opt.wrong{opacity:.45;border-color:rgba(251,113,133,.45);background:rgba(251,113,133,.07)}
+  .opt.wrong .opt-text{text-decoration:line-through;text-decoration-color:rgba(251,113,133,.7)}
+  .opt:disabled{cursor:not-allowed}
+  .feedback{min-height:24px;margin:18px 0 0;font-family:var(--mono);font-size:.76rem;letter-spacing:.1em;color:var(--muted)}
+  .feedback.bad{color:#fda4af}
+  .qfoot{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:18px;flex-wrap:wrap}
+  .shake{animation:shake .42s cubic-bezier(.36,.07,.19,.97) both}
+  @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+
+  /* ---------- unlock panel ---------- */
+  .unlock{width:min(940px,100%);text-align:center;padding:clamp(28px,5vw,56px);
+    background:linear-gradient(180deg,rgba(13,32,30,.85),rgba(8,17,20,.92));
+    border:1px solid rgba(52,211,153,.32);border-radius:24px;
+    box-shadow:0 0 60px -20px rgba(52,211,153,.35),inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .unlock .eyebrow{color:var(--green)}
+  .bigdigit{
+    font-family:var(--mono);font-size:clamp(4.5rem,15vw,8.5rem);line-height:1;margin:10px 0 6px;
+    color:#a7f3d0;text-shadow:0 0 30px rgba(52,211,153,.7),0 0 90px rgba(52,211,153,.4);
+  }
+  .bigdigit.pop{animation:pop .6s cubic-bezier(.2,1.7,.4,1) both}
+  @keyframes pop{0%{transform:scale(.25);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+  .unlock p{color:#a7f3d0;opacity:.85;margin:0 0 22px}
+  .unlock .round-time{
+    font-family:var(--mono);font-size:.76rem;letter-spacing:.12em;color:#6ee7b7;
+    opacity:.75;margin:-12px 0 22px;
+  }
+  .auto-hint{font-size:.72rem;color:#a7f3d0;opacity:.45;margin:16px 0 0 !important}
+
+  /* ---------- end screens ---------- */
+  .endcard{text-align:center;max-width:640px}
+  .end-ico{
+    width:74px;height:74px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;
+    font-size:2rem;border:1px solid var(--line);
+  }
+  .end-ico.ok{background:rgba(52,211,153,.12);border-color:rgba(52,211,153,.45);box-shadow:0 0 46px rgba(52,211,153,.28)}
+  .end-ico.bad{background:rgba(251,113,133,.12);border-color:rgba(251,113,133,.45);box-shadow:0 0 46px rgba(251,113,133,.26)}
+  .end-title{
+    font-family:var(--mono);font-size:clamp(1.6rem,5vw,2.6rem);letter-spacing:.1em;margin:.2em 0 .3em;
+  }
+  .end-title.ok{color:#a7f3d0;text-shadow:0 0 34px rgba(52,211,153,.55)}
+  .end-title.bad{color:#fecdd3;text-shadow:0 0 34px rgba(251,113,133,.45)}
+  .win-code{
+    font-family:var(--mono);font-size:clamp(2.6rem,10vw,4.6rem);letter-spacing:.24em;margin:18px 0;
+    padding-left:.24em;color:#cffafe;text-shadow:0 0 34px rgba(34,211,238,.6);
+  }
+  .win-code.bad{color:#fecdd3;text-shadow:0 0 34px rgba(251,113,133,.5)}
+  .stats{display:flex;justify-content:center;gap:34px;margin:6px 0 4px;flex-wrap:wrap}
+  .stats .k{display:block;font-family:var(--mono);font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .stats b{font-family:var(--mono);font-size:1.15rem;color:#e2e8f0}
+  .round-times{display:flex;flex-direction:column;gap:6px;margin:4px auto 20px;max-width:330px;text-align:left}
+  .round-times .rt{
+    display:flex;justify-content:space-between;gap:20px;font-family:var(--mono);font-size:.75rem;
+    padding:7px 12px;border-radius:9px;background:rgba(148,163,184,.05);
+    border:1px solid var(--line);color:var(--muted);letter-spacing:.04em;
+  }
+  .round-times .rt b{color:#e2e8f0;font-weight:500;font-variant-numeric:tabular-nums}
+  .fail-note{
+    margin:18px 0 0;padding:12px 16px;border-radius:12px;font-size:.8rem;line-height:1.5;
+    color:#fda4af;background:rgba(251,113,133,.08);border:1px solid rgba(251,113,133,.25);
+  }
+  .mission{
+    margin:20px auto 4px;max-width:520px;padding:16px 20px;border-radius:16px;text-align:center;
+    border:1px solid var(--line);background:rgba(148,163,184,.05);
+  }
+  .mission .mission-k{
+    margin:0;font-family:var(--mono);font-size:.6rem;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .mission-title{
+    margin:6px 0 6px;font-family:var(--mono);font-size:clamp(1rem,3.2vw,1.25rem);
+    letter-spacing:.03em;line-height:1.4;color:#e2e8f0;
+  }
+  .mission-score{margin:0;font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;color:var(--muted)}
+  .mission.master{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.08);box-shadow:0 0 40px rgba(52,211,153,.12)}
+  .mission.master .mission-title{color:#a7f3d0;text-shadow:0 0 24px rgba(52,211,153,.45)}
+  .mission.almost{border-color:rgba(34,211,238,.4);background:rgba(34,211,238,.07)}
+  .mission.almost .mission-title{color:#a5f3fc}
+  .mission.second{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.06)}
+  .mission.second .mission-title{color:#fde68a}
+  .mission.trapped{border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.06)}
+  .mission.trapped .mission-title{color:#fecdd3}
+
+  /* ---------- editor ---------- */
+  .sheet{
+    width:min(1000px,100%);
+    background:linear-gradient(180deg,rgba(15,23,40,.94),rgba(8,13,22,.96));
+    border:1px solid var(--line);border-radius:22px;
+    padding:clamp(18px,3vw,32px);
+    box-shadow:0 30px 70px -32px rgba(0,0,0,.95);
+  }
+  .sheet-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .sheet-head h1{font-family:var(--mono);font-size:1.35rem;letter-spacing:.06em;margin:6px 0 0}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .tab{
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;
+    padding:10px 16px;border-radius:10px;border:1px solid var(--line);
+    background:transparent;color:var(--muted);cursor:pointer;transition:.16s;
+  }
+  .tab:hover{color:var(--txt);border-color:rgba(148,163,184,.35)}
+  .tab.active{border-color:rgba(34,211,238,.55);color:#cffafe;background:rgba(34,211,238,.11)}
+  .field{margin-bottom:18px}
+  .field > label{display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  input[type=text],input[type=password],textarea{
+    width:100%;background:rgba(3,7,14,.72);border:1px solid var(--line);border-radius:10px;
+    color:var(--txt);padding:12px 14px;font-family:inherit;font-size:.94rem;outline:none;transition:.15s;
+  }
+  textarea{resize:vertical;min-height:82px;line-height:1.55}
+  input:focus,textarea:focus{border-color:rgba(34,211,238,.6);box-shadow:0 0 0 3px rgba(34,211,238,.12)}
+  .opt-editor{display:flex;flex-direction:column;gap:8px}
+  .opt-row{display:grid;grid-template-columns:auto 26px 1fr;align-items:center;gap:11px}
+  .opt-row input[type=radio]{width:18px;height:18px;accent-color:var(--cyan);cursor:pointer}
+  .opt-letter{font-family:var(--mono);font-size:.76rem;color:var(--muted);text-align:center}
+  .qlist-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+  .qlist{display:flex;flex-direction:column;gap:12px}
+  .qblock{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(148,163,184,.03)}
+  .qblock-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .qblock-num{font-family:var(--mono);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan)}
+  .qblock .btn{padding:6px 11px;font-size:.72rem}
+  .qblock textarea{min-height:56px;margin-bottom:10px}
+  .digit-input{width:90px !important;text-align:center;font-family:var(--mono) !important;font-size:1.35rem !important;letter-spacing:.06em}
+  .row2{display:flex;gap:26px;align-items:flex-end;flex-wrap:wrap}
+  .preview{font-family:var(--mono);font-size:.9rem;color:var(--muted)}
+  .preview strong{color:#6ee7b7;letter-spacing:.2em;font-size:1.1rem}
+  .save-msg{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:#6ee7b7;margin-left:6px}
+  .save-msg.err{color:#fda4af}
+  .sec{
+    margin-top:26px;padding-top:22px;border-top:1px dashed rgba(148,163,184,.22);
+  }
+  .sec h2{font-family:var(--mono);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+  .pw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+  .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  .hintbox{margin-top:12px;font-size:.76rem;color:#fde68a;line-height:1.5}
+  .status{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;margin-top:10px;min-height:18px}
+  .status.ok{color:#6ee7b7}
+  .status.bad{color:#fda4af}
+
+  /* ---------- player name ---------- */
+  .name-field{max-width:340px;margin:0 auto 18px}
+  .name-field label{
+    display:block;text-align:center;font-family:var(--mono);font-size:.64rem;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+  }
+  #player-name{text-align:center;font-size:1rem;padding:13px 16px}
+
+  /* ---------- scoreboard ---------- */
+  .sb-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .sb-stat{padding:12px 14px;border-radius:12px;background:rgba(148,163,184,.05);border:1px solid var(--line)}
+  .sb-stat .k{display:block;font-family:var(--mono);font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .sb-stat b{font-family:var(--mono);font-size:1.25rem;color:#a5f3fc;font-variant-numeric:tabular-nums}
+  .sb-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:rgba(3,7,14,.35)}
+  table.sb{width:100%;border-collapse:collapse;font-size:.82rem;min-width:560px}
+  table.sb th{
+    font-family:var(--mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);
+    background:rgba(148,163,184,.05);white-space:nowrap;font-weight:400;
+  }
+  table.sb td{padding:10px 12px;border-bottom:1px solid rgba(148,163,184,.08);color:#cbd5e1}
+  table.sb tr:last-child td{border-bottom:none}
+  table.sb td.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.sb td.num{color:var(--muted);width:34px}
+  .badge-ok,.badge-bad{
+    display:inline-block;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;
+    text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap;
+  }
+  .badge-ok{color:#6ee7b7;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.35)}
+  .badge-bad{color:#fda4af;background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133,.35)}
+  .badge-warn{color:#fde68a;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35)}
+  .sb-empty{padding:20px;text-align:center;color:var(--muted);font-size:.82rem;margin:0}
+
+  /* ---------- modal / toast ---------- */
+  .modal{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:20px;background:rgba(2,5,12,.78);backdrop-filter:blur(6px)}
+  .modal-card{
+    width:min(430px,100%);background:linear-gradient(180deg,#101a2c,#080e18);
+    border:1px solid rgba(34,211,238,.28);border-radius:20px;padding:26px;
+    box-shadow:0 40px 90px -30px #000,0 0 60px -20px rgba(34,211,238,.3);
+    animation:screenIn .28s ease both;
+  }
+  .modal-card h2{margin:0 0 6px;font-family:var(--mono);font-size:1.15rem;letter-spacing:.05em}
+  .modal-card p{margin:0 0 16px;font-size:.86rem}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+  .err{color:#fda4af;font-size:.8rem;min-height:18px;font-family:var(--mono);margin-top:8px}
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:90;
+    background:rgba(13,22,36,.96);border:1px solid rgba(34,211,238,.4);color:#cffafe;
+    padding:12px 20px;border-radius:12px;font-size:.84rem;max-width:min(520px,92vw);
+    box-shadow:0 20px 50px -20px #000;animation:toastIn .3s ease both;
+  }
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+  #confetti{position:fixed;inset:0;z-index:70;pointer-events:none;display:none}
+
+  @media (max-width:720px){
+    .rule-grid{grid-template-columns:1fr}
+    .options{grid-template-columns:1fr}
+    .pw-grid{grid-template-columns:1fr}
+    .guard{display:none}
+    .progress{grid-template-columns:1fr}
+    .prog-label{font-size:.6rem}
+    .sb-summary{grid-template-columns:repeat(2,1fr)}
+  }
+
+  /* On student devices the teacher/admin entrance is hidden entirely. */
+  body.student-device #btn-editor{display:none!important}
+</style>
+</head>
+<body>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="scan" aria-hidden="true"></div>
+
+<!-- ================= HOME ================= -->
+<section id="screen-home" class="screen active">
+  <div class="card">
+    <div class="home-head">
+      <div class="badge" aria-hidden="true">
+        <svg viewBox="0 0 48 48"><rect x="10" y="21" width="28" height="20" rx="5"/><path d="M17 21v-5a7 7 0 0 1 14 0v5"/><circle cx="24" cy="30" r="2.4"/><path d="M24 32.5V36"/></svg>
+      </div>
+      <p class="eyebrow">Classroom escape game</p>
+      <h1 class="title">ESCAPE THE DIGITAL ROOM</h1>
+      <p class="lede">Three rounds. Three secret digits. One way out.</p>
+    </div>
+
+    <div class="rule-grid">
+      <div class="rule">
+        <span class="ri">1</span>
+        <div><b>Round 1 · Easy</b><p>Answer every question in the round to unlock the first digit.</p></div>
+      </div>
+      <div class="rule">
+        <span class="ri">2</span>
+        <div><b>Round 2 · Medium</b><p>Binary and ASCII puzzle. Unlock digit two.</p></div>
+      </div>
+      <div class="rule">
+        <span class="ri">3</span>
+        <div><b>Round 3 · Hard</b><p>Programming logic. Unlock the final digit.</p></div>
+      </div>
+    </div>
+
+    <div class="warn">
+      <span>&#9888;</span>
+      <span><b>Focus lock is active during play.</b> Do not switch tabs, open another page, or leave fullscreen — the game ends immediately and your progress is lost.</span>
+    </div>
+
+    <div class="name-field" id="nameField">
+      <label for="player-name">Your name</label>
+      <input type="text" id="player-name" maxlength="24" placeholder="Type your name to begin" autocomplete="off" />
+    </div>
+
+    <div style="text-align:center">
+      <button id="btn-start" class="btn primary lg">Enter the room</button>
+    </div>
+
+    <p class="device-row" id="device-row" hidden>
+      Other devices: <a id="device-link" href="#" target="_blank" rel="noopener"></a>
+      <button id="btn-copy-device" class="link-btn" type="button">copy</button>
+      <span id="device-code-wrap" hidden> &middot; Join code: <b id="device-code"></b></span>
+    </p>
+
+    <div style="text-align:center;margin-top:14px">
+      <button id="btn-editor" class="link-btn">Editor login</button>
+      <span class="build">v22</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GAME ================= -->
+<section id="screen-game" class="screen">
+  <header class="hud">
+    <div class="hud-left">
+      <span class="chip" id="hud-diff" data-diff="Easy">Easy</span>
+      <span class="hud-round" id="hud-round">Round 1 of 3</span>
+      <span class="timer" id="hud-timer" title="Elapsed time">0:00</span>
+    </div>
+    <div class="guard"><span class="dot"></span>FOCUS LOCK</div>
+    <div class="code-dots" id="codeDots" aria-label="Unlocked digits"></div>
+  </header>
+
+  <div class="progress" id="progress"></div>
+
+  <div class="qcard" id="qcard">
+    <div class="qbar" aria-hidden="true"><span id="qbarFill"></span></div>
+    <div class="qmeta"><span>Question <b id="qnum">1</b> of <b id="qtotal">1</b></span><span id="qtitle">Warm-up</span></div>
+    <h2 id="qtext">Loading…</h2>
+    <div class="options" id="options"></div>
+    <div class="qfoot">
+      <span class="tiny">Select one answer, then confirm.</span>
+      <button id="btn-lock" class="btn primary" disabled>Confirm answer</button>
+    </div>
+  </div>
+
+  <div class="unlock" id="unlockPanel" hidden>
+    <p class="eyebrow">Round complete</p>
+    <div class="bigdigit" id="unlockDigit">8</div>
+    <p id="unlockSub">Digit 1 of 3 unlocked.</p>
+    <p class="round-time" id="unlockTime"></p>
+    <button id="btn-next" class="btn primary">Next round &rarr;</button>
+    <p class="auto-hint">Continues automatically in a few seconds.</p>
+  </div>
+</section>
+
+<!-- ================= WIN ================= -->
+<section id="screen-win" class="screen">
+  <div class="card endcard">
+    <div class="end-ico ok">&#128275;</div>
+    <p class="eyebrow">System unlocked</p>
+    <h1 class="end-title ok">YOU ESCAPED</h1>
+    <p class="muted" style="margin:0">The door opened. Here is the password you recovered:</p>
+    <div class="win-code" id="win-code">000</div>
+    <div class="round-times" id="roundTimes"></div>
+    <div class="stats">
+      <div><span class="k">Total time</span><b id="win-time">0:00</b></div>
+      <div><span class="k">Rounds cleared</span><b>3 / 3</b></div>
+    </div>
+    <div class="mission" id="win-mission">
+      <p class="mission-k">Mission result</p>
+      <p class="mission-title" id="win-mission-title"></p>
+      <p class="mission-score" id="win-mission-score"></p>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-again">Play again</button>
+      <button class="btn ghost" id="btn-home-win">Home</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAIL ================= -->
+<section id="screen-fail" class="screen">
+  <div class="card endcard">
+    <div class="end-ico bad">&#9940;</div>
+    <p class="eyebrow">Attempt terminated</p>
+    <h1 class="end-title bad">GAME OVER</h1>
+    <p class="muted" id="fail-reason" style="margin:0"></p>
+    <div class="fail-note">Leaving the game window ends the attempt. Nothing was saved.</div>
+    <div class="mission" id="fail-mission">
+      <p class="mission-k">Mission result</p>
+      <p class="mission-title" id="fail-mission-title"></p>
+      <p class="mission-score" id="fail-mission-score"></p>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-retry">Try again</button>
+      <button class="btn ghost" id="btn-home-fail">Home</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WRONG PASSWORD ================= -->
+<section id="screen-locked" class="screen">
+  <div class="card endcard">
+    <div class="end-ico bad">&#128274;</div>
+    <p class="eyebrow">Access denied</p>
+    <h1 class="end-title bad">WRONG PASSWORD</h1>
+    <p class="muted" style="margin:0">The door stayed locked. This is the code you collected:</p>
+    <div class="win-code bad" id="locked-code">000</div>
+    <div class="fail-note">At least one answer was wrong, so one or more of those digits were not the real ones.</div>
+    <div class="mission" id="locked-mission">
+      <p class="mission-k">Mission result</p>
+      <p class="mission-title" id="locked-mission-title"></p>
+      <p class="mission-score" id="locked-mission-score"></p>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-locked-retry">Try again</button>
+      <button class="btn ghost" id="btn-home-locked">Home</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EDITOR ================= -->
+<section id="screen-editor" class="screen">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div>
+        <p class="eyebrow">Editor / Admin</p>
+        <h1>Game settings</h1>
+      </div>
+      <button id="btn-editor-close" class="btn ghost">&#8592; Back</button>
+    </div>
+
+    <div class="tabs" id="editorTabs">
+      <button class="tab active" data-round="0">Round 1 · Easy</button>
+      <button class="tab" data-round="1">Round 2 · Medium</button>
+      <button class="tab" data-round="2">Round 3 · Hard</button>
+    </div>
+
+    <div class="field">
+      <label for="ed-title">Round name</label>
+      <input type="text" id="ed-title" maxlength="60" />
+    </div>
+
+    <div class="field">
+      <div class="row2">
+        <div>
+          <label for="ed-digit" style="display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Secret digit</label>
+          <input type="text" id="ed-digit" class="digit-input" maxlength="1" inputmode="text" autocomplete="off" />
+        </div>
+        <div class="preview">Final password preview: <strong id="ed-preview">---</strong></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="qlist-head">
+        <label style="margin:0">Questions in this round <span id="ed-count" class="tiny"></span></label>
+        <button id="btn-add-q" class="btn" type="button">+ Add question</button>
+      </div>
+      <div class="qlist" id="ed-question-list"></div>
+      <p class="tiny" style="margin:10px 0 0">Tick the correct answer for each question. The round digit is only revealed after every question in that round is answered.</p>
+    </div>
+
+    <div class="actions" style="justify-content:flex-start;margin-top:6px">
+      <button id="btn-save" class="btn primary">Save changes</button>
+      <button id="btn-discard" class="btn ghost">Discard</button>
+      <span class="save-msg" id="save-msg"></span>
+    </div>
+
+    <div class="sec">
+      <h2>Security</h2>
+      <div class="pw-grid">
+        <input type="password" id="pw-cur" placeholder="Current password" autocomplete="current-password" />
+        <input type="password" id="pw-new" placeholder="New password (min 4)" autocomplete="new-password" />
+        <input type="password" id="pw-cf" placeholder="Confirm new password" autocomplete="new-password" />
+      </div>
+      <div class="tools">
+        <button id="btn-pw" class="btn">Change password</button>
+        <button id="btn-export" class="btn">Export questions</button>
+        <button id="btn-import" class="btn">Import questions</button>
+        <input type="file" id="file-import" accept="application/json,.json" hidden />
+        <button id="btn-reset" class="btn danger">Restore demo questions</button>
+      </div>
+      <p class="status" id="pw-msg"></p>
+      <p class="hintbox" id="default-hint" hidden>
+        You are still using the default editor password. Change it now so students cannot log in.
+      </p>
+
+      <div id="join-code-box" hidden>
+        <h2 style="margin-top:22px">Student join code</h2>
+        <p class="muted">Students must type this code once before the game opens. Give it to the class, and change it whenever you want. Changing it asks every device for the new code.</p>
+        <div class="tools">
+          <input type="text" id="join-code-input" maxlength="12" placeholder="Join code" style="max-width:200px;text-transform:uppercase" autocomplete="off" spellcheck="false" />
+          <button id="btn-join-code" class="btn">Change code</button>
+          <button id="btn-join-copy" class="btn ghost">Copy code</button>
+        </div>
+        <p class="status" id="join-code-msg"></p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h2>Scoreboard</h2>
+      <div class="sb-summary">
+        <div class="sb-stat"><span class="k">Players</span><b id="sb-total">0</b></div>
+        <div class="sb-stat"><span class="k">Escaped</span><b id="sb-escaped">0</b></div>
+        <div class="sb-stat"><span class="k">Attempts</span><b id="sb-attempts">0</b></div>
+        <div class="sb-stat"><span class="k">Fastest escape</span><b id="sb-best">—</b></div>
+      </div>
+      <div class="sb-wrap" id="sb-wrap">
+        <table class="sb" id="sb-table">
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Status</th><th>Code</th><th>Total time</th><th>Wrong</th><th>When</th></tr>
+          </thead>
+          <tbody id="sb-body"></tbody>
+        </table>
+        <p class="sb-empty" id="sb-empty">No attempts yet.</p>
+      </div>
+      <div class="tools">
+        <button id="btn-sb-export" class="btn">Export results (CSV)</button>
+        <button id="btn-sb-refresh" class="btn">Refresh</button>
+        <button id="btn-sb-clear" class="btn danger">Clear scoreboard</button>
+      </div>
+      <p class="tiny" id="sb-mode" style="margin-top:10px"></p>
+    </div>
+
+    <p class="tiny" style="margin-top:18px">
+      Note: the standalone file stores questions and results in this browser only.
+      When the game is opened from <b>server.py</b>, one shared question set is used and every
+      student's result is collected on this computer. A technically skilled student could still
+      inspect the page source, so always change the default editor password.
+    </p>
+  </div>
+</section>
+
+<!-- ================= MODAL ================= -->
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <h2 id="login-title">Editor login</h2>
+    <p class="muted">Only the teacher / editor can change questions or secret digits.</p>
+    <input type="password" id="login-pw" placeholder="Password" autocomplete="current-password" />
+    <div class="err" id="login-err"></div>
+    <div class="modal-actions">
+      <button id="login-cancel" class="btn ghost">Cancel</button>
+      <button id="login-ok" class="btn primary">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+
+
+<script>
+(function () {
+  'use strict';
+
+  var DEFAULT_PW = 'admin123';
+  var STORE_KEY = 'edr.config.v1';
+  var DIFFS = ['Easy', 'Medium', 'Hard'];
+
+  var DEFAULT_ROUNDS = [
+    { title: 'Warm-up', digit: '8', questions: [
+      { question: 'How many bits are in one byte?', options: ['4', '6', '8', '16'], correct: 2 }
+    ]},
+    { title: 'Binary', digit: '4', questions: [
+      { question: 'Which letter is represented by the binary 01000010 in ASCII?', options: ['A', 'B', 'C', 'D'], correct: 1 }
+    ]},
+    { title: 'Code logic', digit: '1', questions: [
+      { question: 'In C, what is the output of 10 % 3?', options: ['0', '1', '3', '3.33'], correct: 1 }
+    ]}
+  ];
+
+  var $ = function (sel) { return document.querySelector(sel); };
+  var clone = function (obj) { return JSON.parse(JSON.stringify(obj)); };
+
+  var config = null;
+  var isDefaultPw = true;
+  var draft = null;
+  var editorTab = 0;
+  var lastResults = [];
+
+  // 'local' = standalone file (results only on this computer)
+  // 'server' = opened from server.py (results collected from every device)
+  // student = true on student devices: the editor/scoreboard entrance is hidden.
+  var NET = { mode: 'local', token: '', student: false };
+
+  async function api(path, body) {
+    var opts = { cache: 'no-store' };
+    if (body) {
+      opts.method = 'POST';
+      opts.headers = { 'Content-Type': 'application/json' };
+      opts.body = JSON.stringify(body);
+    }
+    var res = await fetch(path, opts);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  var state = {
+    active: false,
+    fsRequired: false,
+    graceUntil: 0,
+    roundIndex: 0,
+    qIndex: 0,
+    roundWrong: 0,
+    selected: null,
+    digits: [],
+    rounds: [],
+    wrong: 0,
+    correct: 0,
+    startedAt: 0,
+    roundStartedAt: 0,
+    roundTimes: [],
+    timerId: 0,
+    advanceTimer: 0,
+    playerName: ''
+  };
+
+  /* ---------------- storage ---------------- */
+  function saveConfig() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(config)); } catch (e) { /* ignore */ }
+  }
+
+  function loadConfig() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return null;
+      var c = JSON.parse(raw);
+      if (!c || !Array.isArray(c.rounds) || c.rounds.length !== 3) return null;
+      return c;
+    } catch (e) { return null; }
+  }
+
+  /* ---------------- hashing ---------------- */
+  function fnv1a(str) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h.toString(16).padStart(8, '0');
+  }
+
+  async function hashPassword(pw) {
+    var data = 'edr::' + pw;
+    if (window.isSecureContext && window.crypto && crypto.subtle && crypto.subtle.digest) {
+      try {
+        var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
+        return Array.from(new Uint8Array(buf)).map(function (b) {
+          return b.toString(16).padStart(2, '0');
+        }).join('');
+      } catch (e) { /* fall through */ }
+    }
+    return 'fnv:' + fnv1a(data) + fnv1a(data.split('').reverse().join(''));
+  }
+
+  /* ---------------- screens ---------------- */
+  function show(name) {
+    var screens = document.querySelectorAll('.screen');
+    for (var i = 0; i < screens.length; i++) {
+      screens[i].classList.toggle('active', screens[i].id === 'screen-' + name);
+    }
+    window.scrollTo(0, 0);
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var old = document.querySelector('.toast');
+    if (old) old.remove();
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.remove(); }, 4200);
+  }
+
+  function copyText(text, okMessage) {
+    var done = function () { toast(okMessage || 'Copied.'); };
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { /* ignore */ }
+      ta.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  /* ---------------- fullscreen ---------------- */
+  function canFullscreen() {
+    var el = document.documentElement;
+    return !!(el.requestFullscreen || el.webkitRequestFullscreen);
+  }
+
+  async function enterFullscreen() {
+    var el = document.documentElement;
+    var req = null;
+    try {
+      if (el.requestFullscreen) {
+        try { req = el.requestFullscreen({ navigationUI: 'hide' }); }
+        catch (e) { req = el.requestFullscreen(); }
+      } else if (el.webkitRequestFullscreen) {
+        req = Promise.resolve(el.webkitRequestFullscreen());
+      }
+    } catch (e) { /* blocked */ }
+
+    if (req && typeof req.then === 'function') {
+      // Never let a browser permission prompt block the game from starting.
+      try {
+        await Promise.race([
+          req.catch(function () {}),
+          new Promise(function (resolve) { setTimeout(resolve, 1200); })
+        ]);
+      } catch (e) { /* ignore */ }
+    }
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  function leaveFullscreen() {
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(function () {});
+      } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  function fsElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  /* ---------------- game ---------------- */
+  function fmtTime(ms) {
+    var total = Math.max(0, Math.round(ms / 1000));
+    var h = Math.floor(total / 3600);
+    var m = Math.floor((total % 3600) / 60);
+    var s = total % 60;
+    if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function startTimer() {
+    stopTimer();
+    var el = $('#hud-timer');
+    if (el) el.textContent = '0:00';
+    state.timerId = setInterval(function () {
+      var t = $('#hud-timer');
+      if (t) t.textContent = fmtTime(Date.now() - state.startedAt);
+    }, 250);
+  }
+
+  function stopTimer() {
+    if (state.timerId) {
+      clearInterval(state.timerId);
+      state.timerId = 0;
+    }
+  }
+
+  async function startGame() {
+    if (state.active) return;
+
+    var nameEl = $('#player-name');
+    var name = (nameEl.value || '').trim();
+    if (!name) {
+      var field = $('#nameField');
+      field.classList.remove('shake');
+      void field.offsetWidth;
+      field.classList.add('shake');
+      if (!$('#screen-home').classList.contains('active')) show('home');
+      nameEl.focus();
+      toast('Type your name before entering the room.');
+      return;
+    }
+    state.playerName = name.slice(0, 24);
+    if (nameEl.blur) nameEl.blur();
+
+    stopAdvance();
+    var fsOk = false;
+    if (canFullscreen()) fsOk = await enterFullscreen();
+
+    state.active = true;
+    state.fsRequired = fsOk;
+    state.graceUntil = Date.now() + 1800;
+    state.roundIndex = 0;
+    state.selected = null;
+    state.digits = [];
+    state.rounds = buildAttemptRounds();
+    state.wrong = 0;
+    state.correct = 0;
+    state.startedAt = Date.now();
+    state.roundTimes = [];
+
+    show('game');
+    startTimer();
+    renderRound();
+
+    if (canFullscreen() && !fsOk) {
+      toast('Fullscreen was blocked by the browser. Tab-switch detection is still active.');
+    }
+  }
+
+  function recordResult(status, reason) {
+    var rec = {
+      name: state.playerName || 'Anonymous',
+      status: status,
+      reason: reason || '',
+      code: state.digits.join(''),
+      totalMs: Math.max(0, Date.now() - state.startedAt),
+      roundMs: state.roundTimes.slice(0, 3),
+      wrong: state.wrong,
+      correct: state.correct,
+      total: totalQuestions(),
+      at: new Date().toISOString()
+    };
+
+    if (NET.mode === 'server') {
+      fetch('/api/result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rec),
+        keepalive: true
+      }).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+      }).catch(function () { saveResultLocally(rec); });
+    } else {
+      saveResultLocally(rec);
+    }
+  }
+
+  function saveResultLocally(rec) {
+    if (!Array.isArray(config.results)) config.results = [];
+    config.results.push(rec);
+    saveConfig();
+  }
+
+  function totalQuestions() {
+    var n = 0;
+    config.rounds.forEach(function (r) { n += (r.questions ? r.questions.length : 0); });
+    return n;
+  }
+
+  function shuffled(list) {
+    var a = list.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // Every attempt (every device) gets its own question order and answer order.
+  // The correct answer follows its text, so the score is still exact.
+  function buildAttemptRounds() {
+    return config.rounds.map(function (r) {
+      var qs = shuffled(r.questions).map(function (q) {
+        var order = shuffled(q.options.map(function (_, i) { return i; }));
+        return {
+          question: q.question,
+          options: order.map(function (i) { return q.options[i]; }),
+          correct: order.indexOf(q.correct)
+        };
+      });
+      return { title: r.title, digit: r.digit, questions: qs };
+    });
+  }
+
+  // Mission rules: 0-5 trapped · 6-10 second door · 11-14 almost · 15/15 master.
+  // If the teacher uses a different number of questions, the same cut-offs scale.
+  function missionFor(correct, total) {
+    if (!total) return { title: 'You are still trapped!', tier: 'trapped' };
+    if (correct >= total) return { title: 'Digital Room Escape Master! 🏆', tier: 'master' };
+    var ratio = correct / total;
+    if (ratio >= 11 / 15) return { title: 'Almost escaped!', tier: 'almost' };
+    if (ratio >= 6 / 15) return { title: 'You unlocked the second door!', tier: 'second' };
+    return { title: 'You are still trapped!', tier: 'trapped' };
+  }
+
+  function renderMission(prefix) {
+    var total = totalQuestions();
+    var m = missionFor(state.correct, total);
+    var box = $('#' + prefix + '-mission');
+    if (!box) return;
+    box.className = 'mission ' + m.tier;
+    $('#' + prefix + '-mission-title').textContent = m.title;
+    $('#' + prefix + '-mission-score').textContent =
+      state.correct + ' / ' + total + ' correct';
+  }
+
+  function decoyDigit(roundIndex) {
+    var real = config.rounds.map(function (r) { return String(r.digit); });
+    var pool = [];
+    var d;
+    // Prefer a digit that is not part of the real password at all,
+    // so a wrong answer can never look like a real digit.
+    for (d = 0; d <= 9; d++) {
+      if (real.indexOf(String(d)) === -1) pool.push(String(d));
+    }
+    if (!pool.length) {
+      for (d = 0; d <= 9; d++) {
+        if (String(d) !== String(config.rounds[roundIndex].digit)) pool.push(String(d));
+      }
+    }
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function endGame(reason) {
+    if (!state.active) return;
+    state.active = false;
+    stopTimer();
+    stopAdvance();
+    recordResult('ended', reason);
+    leaveFullscreen();
+    $('#fail-reason').textContent = reason;
+    renderMission('fail');
+    show('fail');
+  }
+
+  function finishGame() {
+    if (!state.active) return;
+    if (state.digits.filter(function (d) { return !!d; }).length < 3) return;
+
+    var entered = state.digits.join('');
+    var real = config.rounds.map(function (r) { return r.digit; }).join('');
+    if (entered === real) {
+      winGame();
+    } else {
+      lockedGame();
+    }
+  }
+
+  function lockedGame() {
+    if (!state.active) return;
+    state.active = false;
+    stopTimer();
+    stopAdvance();
+    recordResult('locked', 'Wrong password');
+    leaveFullscreen();
+    $('#locked-code').textContent = state.digits.join('');
+    renderMission('locked');
+    show('locked');
+  }
+
+  function winGame() {
+    if (!state.active) return;
+    if (state.digits.filter(function (d) { return !!d; }).length < 3) return;
+    var totalMs = Date.now() - state.startedAt;
+    state.active = false;
+    stopTimer();
+    stopAdvance();
+    recordResult('escaped', '');
+    leaveFullscreen();
+
+    var code = state.digits.join('');
+    $('#win-code').textContent = code;
+    $('#win-time').textContent = fmtTime(totalMs);
+
+    var rt = $('#roundTimes');
+    rt.innerHTML = '';
+    state.roundTimes.forEach(function (ms, i) {
+      var row = document.createElement('div');
+      row.className = 'rt';
+      var label = document.createElement('span');
+      label.textContent = 'Round ' + (i + 1) + ' · ' + DIFFS[i];
+      var val = document.createElement('b');
+      val.textContent = fmtTime(ms || 0);
+      row.appendChild(label);
+      row.appendChild(val);
+      rt.appendChild(row);
+    });
+
+    renderMission('win');
+    show('win');
+    burstConfetti();
+  }
+
+  function renderRound() {
+    var r = state.rounds[state.roundIndex];
+    state.selected = null;
+    state.qIndex = 0;
+    state.roundWrong = 0;
+    state.roundStartedAt = Date.now();
+
+    $('#hud-round').textContent = 'Round ' + (state.roundIndex + 1) + ' of 3';
+    var chip = $('#hud-diff');
+    chip.textContent = DIFFS[state.roundIndex];
+    chip.setAttribute('data-diff', DIFFS[state.roundIndex]);
+    $('#qtitle').textContent = r.title || DIFFS[state.roundIndex];
+
+    panel('question');
+    updateHudCode();
+    renderProgress();
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    var r = state.rounds[state.roundIndex];
+    var q = r.questions[state.qIndex];
+    state.selected = null;
+
+    $('#qnum').textContent = String(state.qIndex + 1);
+    $('#qtotal').textContent = String(r.questions.length);
+    $('#qtext').textContent = q.question;
+
+    var fill = $('#qbarFill');
+    if (fill) fill.style.width = Math.round((state.qIndex / r.questions.length) * 100) + '%';
+
+    var wrap = $('#options');
+    wrap.innerHTML = '';
+    q.options.forEach(function (text, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+
+      var k = document.createElement('span');
+      k.className = 'opt-key';
+      k.textContent = String.fromCharCode(65 + i);
+
+      var t = document.createElement('span');
+      t.className = 'opt-text';
+      t.textContent = text;
+
+      b.appendChild(k);
+      b.appendChild(t);
+      b.addEventListener('click', function () {
+        if (b.disabled) return;
+        var all = wrap.children;
+        for (var j = 0; j < all.length; j++) all[j].classList.remove('selected');
+        b.classList.add('selected');
+        state.selected = i;
+        $('#btn-lock').disabled = false;
+      });
+      wrap.appendChild(b);
+    });
+
+    $('#btn-lock').disabled = true;
+  }
+
+  function panel(which) {
+    $('#qcard').hidden = which !== 'question';
+    $('#unlockPanel').hidden = which !== 'unlock';
+  }
+
+  function lockAnswer() {
+    var r = state.rounds[state.roundIndex];
+    var q = r.questions[state.qIndex];
+    if (state.selected === null) return;
+
+    // Correctness is tracked silently for the teacher's scoreboard only.
+    if (state.selected !== q.correct) {
+      state.wrong++;
+      state.roundWrong++;
+    } else {
+      state.correct++;
+    }
+
+    var all = $('#options').children;
+    for (var i = 0; i < all.length; i++) all[i].disabled = true;
+    $('#btn-lock').disabled = true;
+
+    // More questions left in this round: move on without any feedback.
+    if (state.qIndex < r.questions.length - 1) {
+      var roundAt = state.roundIndex;
+      setTimeout(function () {
+        if (!state.active || state.roundIndex !== roundAt) return;
+        state.qIndex++;
+        renderQuestion();
+      }, 320);
+      return;
+    }
+
+    // Last question of the round: unlock this round's digit.
+    state.digits[state.roundIndex] = state.roundWrong === 0
+      ? r.digit
+      : decoyDigit(state.roundIndex);
+    state.roundTimes[state.roundIndex] = Date.now() - state.roundStartedAt;
+
+    updateHudCode();
+    renderProgress();
+    setTimeout(showUnlock, 320);
+  }
+
+  function showUnlock() {
+    if (!state.active) return;
+    var r = state.rounds[state.roundIndex];
+    var last = state.roundIndex === 2;
+
+    var d = $('#unlockDigit');
+    d.textContent = state.digits[state.roundIndex];
+    d.classList.remove('pop');
+    void d.offsetWidth;
+    d.classList.add('pop');
+
+    $('#unlockSub').textContent = last
+      ? 'All three digits are unlocked.'
+      : 'Digit ' + (state.roundIndex + 1) + ' of 3 unlocked.';
+
+    var n = r.questions.length;
+    $('#unlockTime').textContent = 'Answered in ' + fmtTime(state.roundTimes[state.roundIndex] || 0) +
+      ' · ' + n + (n === 1 ? ' question' : ' questions');
+
+    $('#btn-next').textContent = last ? 'Reveal the password →' : 'Next round →';
+    panel('unlock');
+
+    stopAdvance();
+    state.advanceTimer = setTimeout(nextRound, 4200);
+  }
+
+  function stopAdvance() {
+    if (state.advanceTimer) {
+      clearTimeout(state.advanceTimer);
+      state.advanceTimer = 0;
+    }
+  }
+
+  function nextRound() {
+    stopAdvance();
+    if (!state.digits[state.roundIndex]) return;
+    if (state.roundIndex < 2) {
+      state.roundIndex++;
+      renderRound();
+    } else {
+      finishGame();
+    }
+  }
+
+  function updateHudCode() {
+    var wrap = $('#codeDots');
+    wrap.innerHTML = '';
+    for (var i = 0; i < 3; i++) {
+      var s = document.createElement('div');
+      s.className = 'code-slot' + (state.digits[i] ? ' filled' : '');
+      s.textContent = state.digits[i] || '•';
+      wrap.appendChild(s);
+    }
+  }
+
+  function renderProgress() {
+    var wrap = $('#progress');
+    wrap.innerHTML = '';
+    for (var i = 0; i < 3; i++) {
+      var d = document.createElement('div');
+      d.className = 'prog';
+      if (state.digits[i]) d.classList.add('done');
+      if (i === state.roundIndex && !state.digits[i]) d.classList.add('current');
+
+      var n = document.createElement('span');
+      n.className = 'prog-num';
+      n.textContent = state.digits[i] ? state.digits[i] : String(i + 1);
+
+      var l = document.createElement('span');
+      l.className = 'prog-label';
+      l.textContent = DIFFS[i];
+
+      d.appendChild(n);
+      d.appendChild(l);
+      wrap.appendChild(d);
+    }
+  }
+
+  /* ---------------- focus guard ---------------- */
+  function installGuard() {
+    document.addEventListener('visibilitychange', function () {
+      if (state.active && document.hidden) {
+        endGame('You switched tabs or opened another window.');
+      }
+    });
+
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+
+    function onFsChange() {
+      if (!state.active) return;
+      if (state.fsRequired && !fsElement()) {
+        endGame('You exited fullscreen mode.');
+      }
+    }
+
+    window.addEventListener('blur', function () {
+      if (!state.active) return;
+      setTimeout(function () {
+        if (!state.active) return;
+        if (Date.now() < state.graceUntil) return;
+        if (!document.hasFocus()) endGame('The game window lost focus.');
+      }, 420);
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (state.active) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    });
+  }
+
+  /* ---------------- confetti ---------------- */
+  var cvs = document.getElementById('confetti');
+  var cctx = cvs.getContext('2d');
+  var parts = [];
+  var rafId = 0;
+  var stopAt = 0;
+
+  function burstConfetti() {
+    var dpr = window.devicePixelRatio || 1;
+    var W = window.innerWidth;
+    var H = window.innerHeight;
+    cvs.width = W * dpr;
+    cvs.height = H * dpr;
+    cvs.style.width = '100%';
+    cvs.style.height = '100%';
+    cvs.style.display = 'block';
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var palette = ['#22d3ee', '#34d399', '#fbbf24', '#f472b6', '#a78bfa', '#e2e8f0'];
+    parts = [];
+    for (var i = 0; i < 170; i++) {
+      parts.push({
+        x: W / 2 + (Math.random() - 0.5) * W * 0.3,
+        y: H * 0.58 + (Math.random() - 0.5) * 70,
+        vx: (Math.random() - 0.5) * 17,
+        vy: -Math.random() * 15 - 4,
+        g: 0.34 + Math.random() * 0.18,
+        w: 5 + Math.random() * 7,
+        h: 8 + Math.random() * 10,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 0.35,
+        color: palette[(Math.random() * palette.length) | 0],
+        life: 1
+      });
+    }
+    stopAt = performance.now() + 5200;
+    cancelAnimationFrame(rafId);
+    tickConfetti();
+  }
+
+  function tickConfetti() {
+    var W = window.innerWidth;
+    var H = window.innerHeight;
+    cctx.clearRect(0, 0, W, H);
+
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.995;
+      p.rot += p.vr;
+      if (p.y > H + 50) p.life = 0;
+
+      if (p.life) {
+        cctx.save();
+        cctx.translate(p.x, p.y);
+        cctx.rotate(p.rot);
+        cctx.globalAlpha = 0.95;
+        cctx.fillStyle = p.color;
+        cctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        cctx.restore();
+      }
+    }
+
+    parts = parts.filter(function (p) { return p.life; });
+
+    if (performance.now() < stopAt && parts.length) {
+      rafId = requestAnimationFrame(tickConfetti);
+    } else {
+      cctx.clearRect(0, 0, W, H);
+      cvs.style.display = 'none';
+    }
+  }
+
+  /* ---------------- editor ---------------- */
+  async function openEditor() {
+    draft = clone(config.rounds);
+    editorTab = 0;
+    $('#save-msg').textContent = '';
+    renderEditor();
+
+    var modeEl = $('#sb-mode');
+    if (modeEl) {
+      modeEl.textContent = NET.mode === 'server'
+        ? 'Connected to the score server — results from every student device appear here (auto-refreshes every 5 seconds).'
+        : 'Standalone mode — results are stored only in this browser on this computer.';
+    }
+
+    updateDefaultHint();
+    show('editor');
+    loadJoinCode();
+    startSbRefresh();
+    await renderScoreboard(true);
+  }
+
+  async function loadJoinCode() {
+    var box = $('#join-code-box');
+    if (!box) return;
+    if (NET.mode !== 'server' || NET.student) { box.hidden = true; return; }
+    try {
+      var info = await api('/api/share');
+      if (info && info.code) {
+        NET.joinCode = String(info.code).toUpperCase();
+        $('#join-code-input').value = NET.joinCode;
+        box.hidden = false;
+      } else {
+        box.hidden = true;
+      }
+    } catch (e) {
+      box.hidden = true;
+    }
+  }
+
+  async function changeJoinCode() {
+    var msg = $('#join-code-msg');
+    var code = ($('#join-code-input').value || '').trim().toUpperCase();
+    if (!/^[A-Z0-9]{4,12}$/.test(code)) {
+      msg.textContent = 'Use 4 to 12 letters or digits.';
+      msg.className = 'status bad';
+      return;
+    }
+    if (NET.mode !== 'server') {
+      msg.textContent = 'The join code is only used in classroom (server) mode.';
+      msg.className = 'status bad';
+      return;
+    }
+    try {
+      var r = await api('/api/joincode', { token: NET.token, code: code });
+      NET.joinCode = (r && r.code) || code;
+      $('#join-code-input').value = NET.joinCode;
+      msg.textContent = '✓ Join code changed. Every device must enter the new code.';
+      msg.className = 'status ok';
+    } catch (e) {
+      msg.textContent = String(e).indexOf('401') !== -1
+        ? 'Please log in again, then change the code.'
+        : 'Could not change the code. Check the server.';
+      msg.className = 'status bad';
+    }
+  }
+
+  var sbTimer = 0;
+  function startSbRefresh() {
+    stopSbRefresh();
+    if (NET.mode !== 'server') return;
+    sbTimer = setInterval(function () {
+      if ($('#screen-editor').classList.contains('active')) renderScoreboard(true);
+    }, 5000);
+  }
+
+  function stopSbRefresh() {
+    if (sbTimer) {
+      clearInterval(sbTimer);
+      sbTimer = 0;
+    }
+  }
+
+  function renderEditor() {
+    var tabs = $('#editorTabs').children;
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.toggle('active', i === editorTab);
+    }
+
+    var r = draft[editorTab];
+    $('#ed-title').value = r.title || '';
+    $('#ed-digit').value = r.digit || '';
+
+    var list = $('#ed-question-list');
+    list.innerHTML = '';
+    r.questions.forEach(function (q, qi) {
+      list.appendChild(buildQuestionBlock(qi, q));
+    });
+
+    $('#ed-count').textContent = '(' + r.questions.length +
+      (r.questions.length === 1 ? ' question' : ' questions') + ')';
+
+    updatePreview();
+  }
+
+  function buildQuestionBlock(qi, q) {
+    var block = document.createElement('div');
+    block.className = 'qblock';
+
+    var head = document.createElement('div');
+    head.className = 'qblock-head';
+
+    var num = document.createElement('span');
+    num.className = 'qblock-num';
+    num.textContent = 'Question ' + (qi + 1);
+
+    var rm = document.createElement('button');
+    rm.type = 'button';
+    rm.className = 'btn ghost';
+    rm.textContent = 'Remove';
+    var onlyOne = draft[editorTab].questions.length <= 1;
+    rm.disabled = onlyOne;
+    rm.title = onlyOne ? 'A round needs at least one question.' : 'Remove this question';
+    rm.addEventListener('click', function () {
+      draft[editorTab].questions.splice(qi, 1);
+      renderEditor();
+    });
+
+    head.appendChild(num);
+    head.appendChild(rm);
+
+    var ta = document.createElement('textarea');
+    ta.maxLength = 400;
+    ta.rows = 2;
+    ta.placeholder = 'Question text';
+    ta.value = q.question || '';
+    ta.addEventListener('input', function () { q.question = ta.value; });
+
+    var optsWrap = document.createElement('div');
+    optsWrap.className = 'opt-editor';
+
+    for (var j = 0; j < 4; j++) {
+      (function (idx) {
+        var row = document.createElement('div');
+        row.className = 'opt-row';
+
+        var radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'correct-' + editorTab + '-' + qi;
+        radio.checked = q.correct === idx;
+        radio.addEventListener('change', function () {
+          if (radio.checked) q.correct = idx;
+        });
+
+        var letter = document.createElement('span');
+        letter.className = 'opt-letter';
+        letter.textContent = String.fromCharCode(65 + idx);
+
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = q.options[idx] || '';
+        input.maxLength = 120;
+        input.placeholder = 'Answer option ' + String.fromCharCode(65 + idx);
+        input.addEventListener('input', function () { q.options[idx] = input.value; });
+
+        row.appendChild(radio);
+        row.appendChild(letter);
+        row.appendChild(input);
+        optsWrap.appendChild(row);
+      })(j);
+    }
+
+    block.appendChild(head);
+    block.appendChild(ta);
+    block.appendChild(optsWrap);
+    return block;
+  }
+
+  function addQuestion() {
+    draft[editorTab].questions.push({
+      question: '',
+      options: ['', '', '', ''],
+      correct: 0
+    });
+    renderEditor();
+    var list = $('#ed-question-list');
+    var last = list.lastElementChild;
+    if (last) {
+      last.scrollIntoView({ block: 'nearest' });
+      var ta = last.querySelector('textarea');
+      if (ta) ta.focus();
+    }
+    setSaveMsg('Question added — remember to press "Save changes".', false);
+  }
+
+  function updatePreview() {
+    var code = draft.map(function (r) { return r.digit || '•'; }).join('');
+    $('#ed-preview').textContent = code;
+  }
+
+  function switchEditorTab(idx) {
+    editorTab = idx;
+    renderEditor();
+    $('#save-msg').textContent = '';
+  }
+
+  function setSaveMsg(text, isErr) {
+    var el = $('#save-msg');
+    el.textContent = text;
+    el.className = 'save-msg' + (isErr ? ' err' : '');
+  }
+
+  function validateDraft() {
+    for (var i = 0; i < 3; i++) {
+      var r = draft[i];
+      if (!Array.isArray(r.questions) || !r.questions.length) {
+        return { i: i, msg: 'Round ' + (i + 1) + ': add at least one question.' };
+      }
+      for (var q = 0; q < r.questions.length; q++) {
+        var item = r.questions[q];
+        var at = 'Round ' + (i + 1) + ', question ' + (q + 1) + ': ';
+        if (!item.question || !item.question.trim()) {
+          return { i: i, msg: at + 'the question cannot be empty.' };
+        }
+        for (var j = 0; j < 4; j++) {
+          if (!item.options[j] || !item.options[j].trim()) {
+            return { i: i, msg: at + 'all four answer options are required.' };
+          }
+        }
+        if (!(item.correct >= 0 && item.correct <= 3)) {
+          return { i: i, msg: at + 'tick the correct answer.' };
+        }
+      }
+      if (!/^[A-Za-z0-9]$/.test(r.digit || '')) {
+        return { i: i, msg: 'Round ' + (i + 1) + ': the secret digit must be one letter or number.' };
+      }
+    }
+    return null;
+  }
+
+  async function saveEditor(t) {
+    var err = validateDraft();
+    if (err) {
+      switchEditorTab(err.i);
+      setSaveMsg(err.msg, true);
+      return;
+    }
+    config.rounds = clone(draft);
+    saveConfig();
+
+    if (NET.mode === 'server') {
+      setSaveMsg('Saving to the server…', false);
+      try {
+        await api('/api/config', { token: NET.token, rounds: config.rounds });
+        setSaveMsg('✓ Saved on the server — every student device will use these questions.', false);
+      } catch (e) {
+        setSaveMsg('Saved on this device only: the score server could not be reached.', true);
+        return;
+      }
+    } else {
+      setSaveMsg('✓ Saved — students will see the new questions.', false);
+    }
+    if (t) toast('Questions saved.');
+  }
+
+  function discardEditor() {
+    draft = clone(config.rounds);
+    renderEditor();
+    setSaveMsg('Changes discarded.', false);
+  }
+
+  function updateDefaultHint() {
+    var hint = $('#default-hint');
+    if (hint) hint.hidden = !isDefaultPw;
+  }
+
+  /* ---------------- scoreboard (editor only) ---------------- */
+  function scoreResults() {
+    return Array.isArray(config.results) ? config.results : [];
+  }
+
+  async function renderScoreboard(silent) {
+    var results = scoreResults().slice();
+
+    if (NET.mode === 'server') {
+      try {
+        var remote = await api('/api/results?token=' + encodeURIComponent(NET.token));
+        results = Array.isArray(remote.results) ? remote.results : [];
+      } catch (e) {
+        if (!silent) toast('Could not load results from the server.');
+        return;
+      }
+    }
+    lastResults = results;
+    var escaped = results.filter(function (r) { return r.status === 'escaped'; });
+    var best = escaped.length
+      ? Math.min.apply(null, escaped.map(function (r) { return r.totalMs || 0; }))
+      : null;
+
+    var players = {};
+    var escapers = {};
+    results.forEach(function (r) {
+      var key = String(r.name || 'Anonymous').toLowerCase();
+      players[key] = true;
+      if (r.status === 'escaped') escapers[key] = true;
+    });
+
+    $('#sb-total').textContent = String(Object.keys(players).length);
+    $('#sb-escaped').textContent = String(Object.keys(escapers).length);
+    $('#sb-attempts').textContent = String(results.length);
+    $('#sb-best').textContent = best === null ? '—' : fmtTime(best);
+
+    results.sort(function (a, b) {
+      var ae = a.status === 'escaped';
+      var be = b.status === 'escaped';
+      if (ae !== be) return ae ? -1 : 1;
+      if (ae && be) return (a.totalMs || 0) - (b.totalMs || 0);
+      return new Date(b.at || 0) - new Date(a.at || 0);
+    });
+
+    var body = $('#sb-body');
+    body.innerHTML = '';
+
+    results.forEach(function (r, i) {
+      var ok = r.status === 'escaped';
+      var tr = document.createElement('tr');
+
+      var tdN = document.createElement('td');
+      tdN.className = 'num';
+      tdN.textContent = String(i + 1);
+
+      var tdName = document.createElement('td');
+      tdName.textContent = r.name || 'Anonymous';
+
+      var tdStatus = document.createElement('td');
+      var badge = document.createElement('span');
+      if (ok) {
+        badge.className = 'badge-ok';
+        badge.textContent = 'Escaped';
+      } else if (r.status === 'locked') {
+        badge.className = 'badge-warn';
+        badge.textContent = 'Wrong code';
+        badge.title = r.reason || '';
+      } else {
+        badge.className = 'badge-bad';
+        badge.textContent = 'Ended';
+        if (r.reason) badge.title = r.reason;
+      }
+      tdStatus.appendChild(badge);
+
+      var tdCode = document.createElement('td');
+      tdCode.className = 'mono';
+      tdCode.textContent = r.code || '—';
+
+      var tdTime = document.createElement('td');
+      tdTime.className = 'mono';
+      tdTime.textContent = fmtTime(r.totalMs || 0);
+
+      var tdWrong = document.createElement('td');
+      tdWrong.className = 'mono';
+      tdWrong.textContent = String(r.wrong || 0);
+
+      var tdWhen = document.createElement('td');
+      tdWhen.className = 'mono';
+      tdWhen.textContent = r.at ? new Date(r.at).toLocaleString() : '—';
+
+      tr.appendChild(tdN);
+      tr.appendChild(tdName);
+      tr.appendChild(tdStatus);
+      tr.appendChild(tdCode);
+      tr.appendChild(tdTime);
+      tr.appendChild(tdWrong);
+      tr.appendChild(tdWhen);
+      body.appendChild(tr);
+    });
+
+    $('#sb-table').hidden = results.length === 0;
+    $('#sb-empty').hidden = results.length > 0;
+  }
+
+  async function clearScoreboard() {
+    var hasLocal = scoreResults().length > 0;
+    if (NET.mode !== 'server' && !hasLocal) return;
+    if (!confirm('Delete all scoreboard results? This cannot be undone.')) return;
+
+    if (NET.mode === 'server') {
+      try {
+        await api('/api/clear', { token: NET.token });
+      } catch (e) {
+        toast('Could not clear the score server results. Are you still logged in?');
+        return;
+      }
+    } else {
+      config.results = [];
+      saveConfig();
+    }
+    await renderScoreboard(true);
+  }
+
+  function exportResults() {
+    var results = (lastResults.length ? lastResults : scoreResults()).slice();
+    if (!results.length) {
+      toast('The scoreboard is empty.');
+      return;
+    }
+
+    var rows = [['#', 'Name', 'Status', 'Code', 'Total time', 'Round 1', 'Round 2', 'Round 3', 'Wrong guesses', 'When', 'Reason']];
+    var statusText = { escaped: 'Escaped', locked: 'Wrong code', ended: 'Ended' };
+    results.forEach(function (r, i) {
+      var rounds = r.roundMs || [];
+      rows.push([
+        i + 1,
+        r.name || 'Anonymous',
+        statusText[r.status] || 'Ended',
+        r.code || '',
+        fmtTime(r.totalMs || 0),
+        fmtTime(rounds[0] || 0),
+        fmtTime(rounds[1] || 0),
+        fmtTime(rounds[2] || 0),
+        r.wrong || 0,
+        r.at ? new Date(r.at).toLocaleString() : '',
+        r.reason || ''
+      ]);
+    });
+
+    var csv = rows.map(function (row) {
+      return row.map(function (cell) {
+        var s = String(cell);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(',');
+    }).join('\r\n');
+
+    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'escape-room-results.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  /* ---------------- login ---------------- */
+  function openLogin() {
+    if (state.active) return;
+    if (NET.student) {
+      toast('The editor is only available on the teacher computer.');
+      return;
+    }
+    $('#login-pw').value = '';
+    $('#login-err').textContent = '';
+    updateDefaultHint();
+    $('#modal').hidden = false;
+    setTimeout(function () { $('#login-pw').focus(); }, 60);
+  }
+
+  function closeLogin() {
+    $('#modal').hidden = true;
+  }
+
+  async function tryLogin() {
+    var pw = $('#login-pw').value;
+
+    if (NET.mode === 'server') {
+      if (!pw) {
+        $('#login-err').textContent = 'Enter the password.';
+        return;
+      }
+      try {
+        var res = await api('/api/login', { password: pw });
+        NET.token = res.token;
+        closeLogin();
+        openEditor();
+      } catch (e) {
+        $('#login-err').textContent = String(e).indexOf('401') !== -1
+          ? 'Wrong password. Try again.'
+          : 'Could not reach the score server. Check that server.py is running.';
+        $('#login-pw').select();
+      }
+      return;
+    }
+
+    var h = await hashPassword(pw);
+    if (h === config.adminHash) {
+      closeLogin();
+      openEditor();
+    } else {
+      $('#login-err').textContent = 'Wrong password. Try again.';
+      $('#login-pw').select();
+    }
+  }
+
+  async function changePassword() {
+    var msg = $('#pw-msg');
+    var cur = $('#pw-cur').value;
+    var nw = $('#pw-new').value;
+    var cf = $('#pw-cf').value;
+
+    if (NET.mode === 'server') {
+      try {
+        await api('/api/login', { password: cur });
+      } catch (e) {
+        msg.textContent = 'Current password is incorrect.';
+        msg.className = 'status bad';
+        return;
+      }
+    } else if ((await hashPassword(cur)) !== config.adminHash) {
+      msg.textContent = 'Current password is incorrect.';
+      msg.className = 'status bad';
+      return;
+    }
+
+    if (nw.length < 4) {
+      msg.textContent = 'New password must be at least 4 characters.';
+      msg.className = 'status bad';
+      return;
+    }
+    if (nw !== cf) {
+      msg.textContent = 'The new passwords do not match.';
+      msg.className = 'status bad';
+      return;
+    }
+
+    var newHash = await hashPassword(nw);
+
+    if (NET.mode === 'server') {
+      try {
+        var r = await api('/api/password', { token: NET.token, newHash: newHash });
+        config.adminHash = newHash;
+        NET.token = r.token || newHash;
+      } catch (e) {
+        msg.textContent = 'Could not change the password on the server.';
+        msg.className = 'status bad';
+        return;
+      }
+    } else {
+      config.adminHash = newHash;
+    }
+
+    isDefaultPw = false;
+    saveConfig();
+    $('#pw-cur').value = '';
+    $('#pw-new').value = '';
+    $('#pw-cf').value = '';
+    msg.textContent = '✓ Password changed.';
+    msg.className = 'status ok';
+    updateDefaultHint();
+  }
+
+  function cleanQuestion(q) {
+    var opts = [];
+    for (var i = 0; i < 4; i++) {
+      opts.push(String(q && q.options && q.options[i] != null ? q.options[i] : '').slice(0, 120));
+    }
+    var correct = Number(q && q.correct);
+    if (!Number.isInteger(correct) || correct < 0 || correct > 3) correct = 0;
+    return {
+      question: String((q && q.question) || '').slice(0, 400),
+      options: opts,
+      correct: correct
+    };
+  }
+
+  function cleanRound(r, fallback) {
+    var qs = [];
+    if (r && Array.isArray(r.questions) && r.questions.length) {
+      qs = r.questions.map(cleanQuestion);
+    } else if (r && (r.question || r.options)) {
+      qs = [cleanQuestion(r)]; // migrate the old one-question-per-round format
+    } else if (fallback) {
+      qs = clone(fallback.questions);
+    }
+    var digit = String((r && r.digit) || '');
+    return {
+      title: String((r && r.title) || (fallback && fallback.title) || '').slice(0, 60),
+      digit: /^[A-Za-z0-9]$/.test(digit) ? digit : (fallback ? fallback.digit : ''),
+      questions: qs
+    };
+  }
+
+  function exportQuestions() {
+    var payload = { app: 'escape-digital-room', rounds: config.rounds };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'escape-room-questions.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function importQuestions(file) {
+    var fr = new FileReader();
+    fr.onload = function () {
+      try {
+        var obj = JSON.parse(String(fr.result));
+        var rounds = obj.rounds || obj;
+        if (!Array.isArray(rounds) || rounds.length !== 3) {
+          throw new Error('The file must contain exactly 3 rounds.');
+        }
+        var clean = rounds.map(function (r) { return cleanRound(r, null); });
+        clean.forEach(function (r, i) {
+          if (!r.questions.length) {
+            throw new Error('Round ' + (i + 1) + ' has no questions.');
+          }
+        });
+        draft = clean;
+        renderEditor();
+        setSaveMsg('File loaded into the editor. Press "Save changes" to apply.', false);
+      } catch (e) {
+        alert('Could not import this file: ' + e.message);
+      }
+    };
+    fr.readAsText(file);
+  }
+
+  async function resetDefaults() {
+    if (!confirm('Restore the original demo questions and digits? Your editor password stays the same.')) return;
+    config.rounds = clone(DEFAULT_ROUNDS);
+    saveConfig();
+    draft = clone(config.rounds);
+    editorTab = 0;
+    renderEditor();
+
+    if (NET.mode === 'server') {
+      try {
+        await api('/api/config', { token: NET.token, rounds: config.rounds });
+        setSaveMsg('✓ Demo questions restored on the server.', false);
+      } catch (e) {
+        setSaveMsg('Restored on this device only — the server could not be reached.', true);
+      }
+    } else {
+      setSaveMsg('✓ Demo questions restored.', false);
+    }
+  }
+
+  /* ---------------- wiring ---------------- */
+  function wire() {
+    $('#btn-start').addEventListener('click', startGame);
+    $('#btn-editor').addEventListener('click', openLogin);
+    $('#btn-editor-close').addEventListener('click', function () {
+      stopSbRefresh();
+      show('home');
+    });
+
+    $('#btn-lock').addEventListener('click', lockAnswer);
+    $('#btn-next').addEventListener('click', nextRound);
+
+    $('#btn-again').addEventListener('click', startGame);
+    $('#btn-home-win').addEventListener('click', function () { show('home'); });
+
+    $('#btn-retry').addEventListener('click', startGame);
+    $('#btn-home-fail').addEventListener('click', function () { show('home'); });
+    $('#btn-locked-retry').addEventListener('click', startGame);
+    $('#btn-home-locked').addEventListener('click', function () { show('home'); });
+
+    $('#login-ok').addEventListener('click', tryLogin);
+    $('#login-cancel').addEventListener('click', closeLogin);
+    $('#login-pw').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); tryLogin(); }
+    });
+    $('#modal').addEventListener('click', function (e) {
+      if (e.target === $('#modal')) closeLogin();
+    });
+
+    $('#editorTabs').addEventListener('click', function (e) {
+      var btn = e.target.closest('.tab');
+      if (btn) switchEditorTab(Number(btn.getAttribute('data-round')));
+    });
+
+    $('#ed-title').addEventListener('input', function (e) {
+      if (draft) draft[editorTab].title = e.target.value;
+    });
+    $('#ed-digit').addEventListener('input', function (e) {
+      var v = e.target.value.replace(/[^A-Za-z0-9]/g, '').slice(0, 1).toUpperCase();
+      e.target.value = v;
+      if (draft) { draft[editorTab].digit = v; updatePreview(); }
+    });
+
+    $('#btn-save').addEventListener('click', function () { saveEditor(false); });
+    $('#btn-discard').addEventListener('click', discardEditor);
+    $('#btn-add-q').addEventListener('click', addQuestion);
+
+    $('#btn-pw').addEventListener('click', changePassword);
+    $('#btn-join-code').addEventListener('click', changeJoinCode);
+    $('#btn-join-copy').addEventListener('click', function () {
+      var code = ($('#join-code-input').value || '').trim().toUpperCase();
+      if (code) copyText(code, 'Join code copied.');
+    });
+    $('#btn-export').addEventListener('click', exportQuestions);
+    $('#btn-import').addEventListener('click', function () { $('#file-import').click(); });
+    $('#file-import').addEventListener('change', function (e) {
+      if (e.target.files && e.target.files[0]) importQuestions(e.target.files[0]);
+      e.target.value = '';
+    });
+    $('#btn-reset').addEventListener('click', resetDefaults);
+    $('#btn-sb-clear').addEventListener('click', clearScoreboard);
+    $('#btn-sb-export').addEventListener('click', exportResults);
+    $('#btn-sb-refresh').addEventListener('click', function () { renderScoreboard(false); });
+
+    $('#player-name').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); startGame(); }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'E' || e.key === 'e')) {
+        e.preventDefault();
+        if (!state.active && $('#screen-editor').classList.contains('active') === false) openLogin();
+      }
+      if (e.key === 'Enter' && state.active && !$('#qcard').hidden) {
+        if (!$('#btn-lock').disabled) { e.preventDefault(); lockAnswer(); }
+      }
+    });
+
+    installGuard();
+  }
+
+  /* ---------------- boot ---------------- */
+  async function boot() {
+    var saved = loadConfig();
+    if (saved) {
+      config = saved;
+      if (!config.adminHash) {
+        config.adminHash = await hashPassword(DEFAULT_PW);
+        saveConfig();
+      }
+    } else {
+      config = { rounds: clone(DEFAULT_ROUNDS), adminHash: await hashPassword(DEFAULT_PW), results: [] };
+      saveConfig();
+    }
+
+    if (!Array.isArray(config.results)) config.results = [];
+
+    // normalize in case a hand-edited file is missing fields (also migrates the
+    // old one-question-per-round format to the questions[] list)
+    config.rounds = config.rounds.map(function (r, i) {
+      return cleanRound(r, DEFAULT_ROUNDS[i]);
+    });
+    saveConfig();
+
+    // If this page is served by server.py, use the shared question set and
+    // send every result to the shared database instead of this browser only.
+    try {
+      var ping = await api('/api/ping');
+      if (ping && ping.ok) {
+        NET.mode = 'server';
+        // Only the teacher's computer (the one running server.py, reached via
+        // localhost) shows the editor/scoreboard entrance. Add ?teacher=1 to a
+        // LAN address if the scoreboard is needed on a different teacher device.
+        // Through a public tunnel every visitor is a student, even with ?teacher=1.
+        var forceTeacher = /[?&]teacher=1\b/.test(location.search);
+        try {
+          var ctx = await api('/api/context');
+          var tunneled = !!(ctx && ctx.tunnel);
+          if (tunneled) forceTeacher = false;
+          if (ctx && ctx.teacher === false && !forceTeacher) {
+            NET.student = true;
+            document.body.classList.add('student-device');
+          }
+        } catch (e2) {
+          // Server without /api/context: leave the editor entrance visible.
+        }
+        var remote = await api('/api/config');
+        if (remote && Array.isArray(remote.rounds) && remote.rounds.length === 3) {
+          config.rounds = remote.rounds.map(function (r, i) {
+            return cleanRound(r, DEFAULT_ROUNDS[i]);
+          });
+          saveConfig();
+        }
+      }
+    } catch (e) {
+      NET.mode = 'local';
+    }
+
+    isDefaultPw = NET.mode === 'server'
+      ? false
+      : (config.adminHash === (await hashPassword(DEFAULT_PW)) || config.adminHash === null);
+
+    if (NET.mode === 'server' && !NET.student) {
+      api('/api/share').then(function (info) {
+        var urls = (info && Array.isArray(info.urls)) ? info.urls : [];
+        if (!urls.length &&
+            location.hostname && location.hostname !== 'localhost' &&
+            location.hostname !== '127.0.0.1') {
+          urls = [location.origin + '/'];
+        }
+        if (!urls.length) return;
+        var url = (info && info.public) ? info.public : urls[0];
+        var link = $('#device-link');
+        link.href = url;
+        link.textContent = url;
+        $('#device-row').hidden = false;
+        if (info && info.code) {
+          $('#device-code').textContent = String(info.code).toUpperCase();
+          $('#device-code-wrap').hidden = false;
+        }
+        $('#btn-copy-device').addEventListener('click', function () {
+          copyText(url, 'Link copied.');
+        });
+      }).catch(function () { /* older server: keep the line hidden */ });
+    }
+
+    wire();
+    updateDefaultHint();
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
